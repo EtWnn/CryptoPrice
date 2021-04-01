@@ -35,13 +35,21 @@ class KlineRetriever(AbstractRetriever):
         # first get closest kline locally
         kline = self.db.get_closest_kline(asset, ref_asset, self.kline_timeframe, timestamp, window=self.closest_window)
 
-        if kline is not None and abs(kline.open_timestamp - timestamp) < self.kline_timeframe.value / 2:
-            return Price(kline.open, asset, ref_asset, kline.open_timestamp, kline.source)
+        if kline is not None:
+            if abs(kline.open_timestamp - timestamp) < self.kline_timeframe.value * 60 / 2:
+                return Price(kline.open, asset, ref_asset, kline.open_timestamp, kline.source)
+            else:
+                msg = f"{timestamp} and {kline.open_timestamp} are to far apart for {self.kline_timeframe.name}," \
+                      f" fetching online"
+                self.logger.debug(msg)
+        else:
+            msg = f"no kline in around time {timestamp} with a {self.closest_window} window, fetching online"
+            self.logger.debug(msg)
 
         klines = self.get_klines_online(asset, ref_asset, self.kline_timeframe,
                                         timestamp - self.closest_window,
                                         timestamp + self.closest_window)
-        self.db.add_klines(klines)
+        self.db.add_klines(klines, ignore_if_exists=True)
 
         kline = self.db.get_closest_kline(asset, ref_asset, self.kline_timeframe, timestamp, window=self.closest_window)
 
@@ -53,7 +61,7 @@ class KlineRetriever(AbstractRetriever):
             return Price(kline.open, asset, ref_asset, kline.open_timestamp, kline.source)
 
         msg = f"no Kline found for {asset}, {ref_asset}, {self.kline_timeframe}, {timestamp}, w={self.closest_window}"
-        self.logger.info(msg)
+        self.logger.debug(msg)
 
     @abstractmethod
     def get_klines_online(self, asset: str, ref_asset: str, timeframe: TIMEFRAME, start_time: int, end_time: int):
