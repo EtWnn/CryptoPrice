@@ -15,6 +15,8 @@ class Price:
 @dataclass
 class Kline:
     open: float
+    high: float
+    low: float
     close: float
     asset: str
     ref_asset: str
