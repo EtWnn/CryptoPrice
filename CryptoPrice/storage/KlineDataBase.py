@@ -1,5 +1,5 @@
 import sqlite3
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from CryptoPrice.storage.DataBase import DataBase, SQLConditionEnum
 from CryptoPrice.storage.prices import Kline
@@ -62,7 +62,8 @@ class KlineDataBase(DataBase):
             conditions_list.append((table.open_timestamp,
                                     SQLConditionEnum.lower,
                                     end_time))
-        return self.get_conditions_rows(table, conditions_list=conditions_list)
+        rows = self.get_conditions_rows(table, conditions_list=conditions_list)
+        return [self.row_to_kline(asset, ref_asset, timeframe, r) for r in rows]
 
     def get_closest_kline(self, asset: str, ref_asset: str, timeframe: TIMEFRAME, timestamp: int,
                           window: int = 120) -> Optional[Kline]:
@@ -95,7 +96,7 @@ class KlineDataBase(DataBase):
         order_list = [f'ABS({table.open_timestamp} - {timestamp})']
         klines = self.get_conditions_rows(table, conditions_list=conditions_list, order_list=order_list)
         if len(klines):
-            return klines[0]
+            return self.row_to_kline(asset, ref_asset, timeframe, klines[0])
 
     def drop_pair_table(self, asset: str, ref_asset: str, timeframe: TIMEFRAME):
         """
@@ -112,4 +113,22 @@ class KlineDataBase(DataBase):
         """
         table = KlineTable(asset, ref_asset, timeframe)
         super().drop_table(table)
+
+    def row_to_kline(self, asset: str, ref_asset: str, timeframe: TIMEFRAME, row: Tuple):
+        """
+        Take a row from the KlineDatabase and transform it into a Kline object
+
+        :param asset: asset of the trading pair
+        :type asset: str
+        :param ref_asset: reference asset of the trading pair
+        :type ref_asset: str
+        :param timeframe: timeframe for the kline
+        :type timeframe: TIMEFRAME
+        :param row: raw data from the database
+        :type row: Tuple
+        :return: the Kline corresponding to the args
+        :rtype: Kline
+        """
+        return Kline(*row, asset=asset, ref_asset=ref_asset, timeframe=timeframe, source=self.name)
+
 

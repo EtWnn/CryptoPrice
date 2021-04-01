@@ -14,12 +14,12 @@ class Price:
 
 @dataclass
 class Kline:
+    open_timestamp: int
     open: float
     high: float
     low: float
     close: float
     asset: str
     ref_asset: str
-    open_timestamp: int
     timeframe: TIMEFRAME
     source: str
