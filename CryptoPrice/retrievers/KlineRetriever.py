@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Optional
 
-from CryptoPrice.AbstractRetriever import AbstractRetriever
+from CryptoPrice.retrievers.AbstractRetriever import AbstractRetriever
 from CryptoPrice.storage.KlineDataBase import KlineDataBase
 from CryptoPrice.storage.prices import Price
 from CryptoPrice.utils.time import TIMEFRAME

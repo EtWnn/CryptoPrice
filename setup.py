@@ -13,7 +13,7 @@ with open(os.path.join(this_directory, 'CryptoPrice/__init__.py'), encoding='utf
 setup(
     name='CryptoPrice',
     version=about['__version__'],
-    packages=['CryptoPrice'],
+    packages=['CryptoPrice', 'retrievers', 'storage', 'utils'],
     url='https://github.com/EtWnn/CryptoPrice',
     author='EtWnn',
     author_email='',
