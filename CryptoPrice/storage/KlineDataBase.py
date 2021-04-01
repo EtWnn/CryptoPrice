@@ -34,7 +34,7 @@ class KlineDataBase(DataBase):
         self.commit()
 
     def get_klines(self, asset: str, ref_asset: str, timeframe: TIMEFRAME, start_time: Optional[int] = None,
-                   end_time: Optional[int] = None):
+                   end_time: Optional[int] = None) -> List[Kline]:
         """
         return the klines corresponding to a trading pair and a timeframe
         a time window can also be provided.
@@ -63,6 +63,39 @@ class KlineDataBase(DataBase):
                                     SQLConditionEnum.lower,
                                     end_time))
         return self.get_conditions_rows(table, conditions_list=conditions_list)
+
+    def get_closest_kline(self, asset: str, ref_asset: str, timeframe: TIMEFRAME, timestamp: int,
+                          window: int = 120) -> Optional[Kline]:
+        """
+        Return the closest Kline in a time window for a trading pair and a timeframe.
+        If there is no Kline, None is returned
+
+        :param asset: asset of the trading pair
+        :type asset: str
+        :param ref_asset: reference asset of the trading pair
+        :type ref_asset: str
+        :param timeframe: timeframe for the kline
+        :type timeframe: TIMEFRAME
+        :param timestamp: time of interest in seconds
+        :type timestamp: int
+        :param window: time window in seconds for the kline to look
+        :type window: int
+        :return: the Kline with an open time the closest to the provided timestamp
+        :rtype: Optional[Kline]
+        """
+        table = KlineTable(asset, ref_asset, timeframe)
+        conditions_list = [
+            (table.open_timestamp,
+             SQLConditionEnum.greater_equal,
+             timestamp - window),
+            (table.open_timestamp,
+             SQLConditionEnum.lower,
+             timestamp + window)
+        ]
+        order_list = [f'ABS({table.open_timestamp} - {timestamp})']
+        klines = self.get_conditions_rows(table, conditions_list=conditions_list, order_list=order_list)
+        if len(klines):
+            return klines[0]
 
     def drop_pair_table(self, asset: str, ref_asset: str, timeframe: TIMEFRAME):
         """
