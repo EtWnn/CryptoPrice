@@ -13,7 +13,7 @@ with open(os.path.join(this_directory, 'CryptoPrice/__init__.py'), encoding='utf
 setup(
     name='CryptoPrice',
     version=about['__version__'],
-    packages=['CryptoPrice'],
+    packages=['CryptoPrice', 'retrievers', 'storage', 'utils'],
     url='https://github.com/EtWnn/CryptoPrice',
     author='EtWnn',
     author_email='',
@@ -21,7 +21,7 @@ setup(
     description='Library to retrieve price or candle history of crypto assets using multiple sources',
     long_description=long_description,
     long_description_content_type='text/x-rst',
-    install_requires=['requests'],
+    install_requires=['requests', 'appdirs', 'python-binance'],
     keywords='eth bsc price ohlc candle history API Binance Kucoin',
     classifiers=[
         'Intended Audience :: Developers',
