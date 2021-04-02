@@ -33,8 +33,8 @@ class KucoinRetriever(KlineRetriever):
             TIMEFRAME.w1: '1week'
         }
 
-    def get_klines_online(self, asset: str, ref_asset: str, timeframe: TIMEFRAME,
-                          start_time: int, end_time: int) -> List[Kline]:
+    def _get_klines_online(self, asset: str, ref_asset: str, timeframe: TIMEFRAME,
+                           start_time: int, end_time: int) -> List[Kline]:
         pair_name = f"{asset}-{ref_asset}"
         batch_size = 1500
         interval_trad = self.kline_traduction[timeframe]

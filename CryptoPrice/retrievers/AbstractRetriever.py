@@ -7,6 +7,8 @@ from CryptoPrice.utils.LoggerGenerator import LoggerGenerator
 
 class AbstractRetriever(ABC):
 
+    MAX_API_RETRY = 3
+
     def __init__(self, name: str):
         self.name = name
         self.logger = LoggerGenerator.get_logger(self.name)

@@ -1,6 +1,8 @@
+import time
 from abc import abstractmethod
 from typing import Optional
 
+from CryptoPrice.exceptions import RateAPIException
 from CryptoPrice.retrievers.AbstractRetriever import AbstractRetriever
 from CryptoPrice.storage.KlineDataBase import KlineDataBase
 from CryptoPrice.storage.prices import Price
@@ -63,8 +65,37 @@ class KlineRetriever(AbstractRetriever):
         msg = f"no Kline found for {asset}, {ref_asset}, {self.kline_timeframe}, {timestamp}, w={self.closest_window}"
         self.logger.debug(msg)
 
+    def get_klines_online(self, asset: str, ref_asset: str, timeframe: TIMEFRAME, start_time: int, end_time: int,
+                          retry_count: int = 0):
+        """
+        This method handles RateAPIException and calls _get_klines_online which will effectively
+        retrieve the online data
+
+        :param asset: asset of the trading pair
+        :type asset: str
+        :param ref_asset: reference asset of the trading pair
+        :type ref_asset: str
+        :param timeframe: timeframe for the kline
+        :type timeframe: TIMEFRAME
+        :param start_time: fetch only klines with an open time greater or equal than start_time
+        :type start_time: Optional[int]
+        :param end_time: fetch only klines with an open time lower than end_time
+        :type end_time: Optional[int]
+        :param retry_count: internal use, number of recursive loops done on this method
+        :type retry_count: int
+        :return: list of klines
+        :rtype: List[Klines]
+        """
+        if retry_count > AbstractRetriever.MAX_API_RETRY:
+            raise RuntimeError(f"The API rate limits has been breached {retry_count} times in a row")
+        try:
+            return self._get_klines_online(asset, ref_asset, timeframe, start_time, end_time)
+        except RateAPIException as err:
+            time.sleep(err.retry_after)
+            return self._get_klines_online(asset, ref_asset, timeframe, start_time, end_time)
+
     @abstractmethod
-    def get_klines_online(self, asset: str, ref_asset: str, timeframe: TIMEFRAME, start_time: int, end_time: int):
+    def _get_klines_online(self, asset: str, ref_asset: str, timeframe: TIMEFRAME, start_time: int, end_time: int):
         """
         Fetch klines online, depends on the retriever used (Binance, Kucoin, CoinAPI...)
 
