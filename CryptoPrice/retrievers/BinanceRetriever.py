@@ -1,9 +1,11 @@
+import datetime
 import traceback
 from typing import List
 
 from binance.client import Client
 from binance.exceptions import BinanceAPIException
 
+from CryptoPrice.exceptions import RateAPIException
 from CryptoPrice.retrievers.KlineRetriever import KlineRetriever
 from CryptoPrice.storage.prices import Kline
 from CryptoPrice.utils.time import TIMEFRAME
@@ -40,12 +42,15 @@ class BinanceRetriever(KlineRetriever):
         batch_size = 1000
         interval_trad = self.kline_traduction[timeframe]
         try:
-            result = self.client.get_klines(symbol=pair_name, interval=interval_trad, startTime=start_time*1000,
-                                            endTime=end_time*1000, limit=batch_size)
+            result = self.client.get_klines(symbol=pair_name, interval=interval_trad, startTime=start_time * 1000,
+                                            endTime=end_time * 1000, limit=batch_size)
         except BinanceAPIException as err:
             if err.code == -1121:
                 self.logger.warning(f"no {timeframe.name} klines for pair {asset} {ref_asset} between {start_time}"
                                     f" and {end_time}")
+            elif err.code == -1003:
+                retry_after = 1 + 60 - datetime.datetime.now().timestamp() % 60
+                raise RateAPIException(err.response, retry_after)
             else:
                 self.logger.error(str(traceback.format_exc()))
             return []
