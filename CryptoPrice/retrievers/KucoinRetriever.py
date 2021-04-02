@@ -1,8 +1,9 @@
-import traceback
+import datetime
 from typing import List
 
 from kucoin.client import Market
 
+from CryptoPrice.exceptions import RateAPIException
 from CryptoPrice.retrievers.KlineRetriever import KlineRetriever
 from CryptoPrice.storage.prices import Kline
 from CryptoPrice.utils.time import TIMEFRAME
@@ -38,9 +39,14 @@ class KucoinRetriever(KlineRetriever):
         pair_name = f"{asset}-{ref_asset}"
         batch_size = 1500
         interval_trad = self.kline_traduction[timeframe]
-        result = self.client.get_kline(symbol=pair_name, kline_type=interval_trad, startAt=start_time,
-                                       endAt=end_time, pageSize=batch_size)
-
+        try:
+            result = self.client.get_kline(symbol=pair_name, kline_type=interval_trad, startAt=start_time,
+                                           endAt=end_time, pageSize=batch_size)
+        except Exception as e:
+            if len(e.args) and "403" in e.args[0]:
+                retry_after = 1 + 60 - datetime.datetime.now().timestamp() % 60
+                raise RateAPIException(retry_after)
+            raise e
         klines = []
         for row in result:
             open_timestamp = int(row[0])

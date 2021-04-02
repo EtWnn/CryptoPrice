@@ -50,7 +50,7 @@ class BinanceRetriever(KlineRetriever):
                                     f" and {end_time}")
             elif err.code == -1003:
                 retry_after = 1 + 60 - datetime.datetime.now().timestamp() % 60
-                raise RateAPIException(err.response, retry_after)
+                raise RateAPIException(retry_after, err.response)
             else:
                 self.logger.error(str(traceback.format_exc()))
             return []
