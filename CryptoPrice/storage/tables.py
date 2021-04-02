@@ -47,3 +47,21 @@ class KlineTable(Table):
                          primary_key="open_timestamp",
                          primary_key_sql_type="INTEGER"
                          )
+
+
+class KlineCacheTable(Table):
+
+    def __init__(self, asset: str, ref_asset: str, timeframe: TIMEFRAME):
+        name = f"{asset}_{ref_asset}_{timeframe.name}"
+        super().__init__(name,
+                         [
+                             "closest",
+                             "window"
+                         ],
+                         [
+                             "INTEGER",
+                             "INTEGER"
+                         ],
+                         primary_key="timestamp",
+                         primary_key_sql_type="INTEGER"
+                         )
