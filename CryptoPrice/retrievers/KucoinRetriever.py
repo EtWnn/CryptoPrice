@@ -43,8 +43,8 @@ class KucoinRetriever(KlineRetriever):
             result = self.client.get_kline(symbol=pair_name, kline_type=interval_trad, startAt=start_time,
                                            endAt=end_time, pageSize=batch_size)
         except Exception as e:
-            if len(e.args) and "403" in e.args[0]:
-                retry_after = 1 + 60 - datetime.datetime.now().timestamp() % 60
+            if len(e.args) and "403" in e.args[0]:  # Kucoin exception for rate limit
+                retry_after = 1 + 60 - datetime.datetime.now().timestamp() % 60  # time until next minute
                 raise RateAPIException(retry_after)
             raise e
         klines = []
