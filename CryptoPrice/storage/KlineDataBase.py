@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple
 
 from CryptoPrice.storage.DataBase import DataBase, SQLConditionEnum
 from CryptoPrice.storage.prices import Kline
-from CryptoPrice.storage.tables import KlineTable
+from CryptoPrice.storage.tables import KlineTable, KlineCacheTable
 from CryptoPrice.utils.time import TIMEFRAME
 
 
@@ -131,4 +131,32 @@ class KlineDataBase(DataBase):
         """
         return Kline(*row, asset=asset, ref_asset=ref_asset, timeframe=timeframe, source=self.name)
 
+    def get_cache_closest(self, asset: str, ref_asset: str, timeframe: TIMEFRAME,
+                          timestamp: int) -> Tuple[Optional[int], int]:
+        """
+        Look if a request for the timestamp has been saved in the cache
+        Return the cached timestamp of the previously selected kline along with the window used at that time
+        a timestamp of -1 means that no result were found
+
+        :param asset: asset of the trading pair
+        :type asset: str
+        :param ref_asset: reference asset of the trading pair
+        :type ref_asset: str
+        :param timeframe: timeframe for the kline
+        :type timeframe: TIMEFRAME
+        :param timestamp: request timestamp
+        :type timestamp: int
+        :return: cached_timestamp, window
+        :rtype: Optional[int], int
+        """
+
+        table = KlineCacheTable(asset, ref_asset, timeframe)
+        conditions_list = [(table.timestamp,
+                            SQLConditionEnum.equal,
+                            timestamp)]
+        rows = self.get_conditions_rows(table, conditions_list=conditions_list)
+        if len(rows):
+            return rows[0][0:]
+        else:
+            return None, -1
 
