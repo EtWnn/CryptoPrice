@@ -5,7 +5,7 @@ from typing import Optional, List
 from CryptoPrice.exceptions import RateAPIException
 from CryptoPrice.retrievers.AbstractRetriever import AbstractRetriever
 from CryptoPrice.storage.KlineDataBase import KlineDataBase
-from CryptoPrice.storage.prices import Price, Kline
+from CryptoPrice.common.prices import Price, Kline
 from CryptoPrice.utils.time import TIMEFRAME
 
 
@@ -17,7 +17,7 @@ class KlineRetriever(AbstractRetriever):
         self.closest_window = closest_window
         self.kline_timeframe = kline_timeframe
 
-    def get_closest_price(self, asset: str, ref_asset: str, timestamp: int) -> Optional[Price]:
+    def _get_closest_price(self, asset: str, ref_asset: str, timestamp: int) -> Optional[Price]:
         """
         Will get the closest price possible in time for a trading pair asset/ref asset. If no price is found, return
         None.
@@ -25,7 +25,7 @@ class KlineRetriever(AbstractRetriever):
         Try to fetch a local kline first, if the kline is to far from the wanted timestamp, will fetch a batch of kline
         online and return the closest one
 
-        :param asset: name of the asset in the trading paire (ex 'BTC' in 'BTCUSDT')
+        :param asset: name of the asset in the trading pair (ex 'BTC' in 'BTCUSDT')
         :type asset: str
         :param ref_asset: name of the reference asset in the trading pair (ex 'USDT' in 'BTCUSDT')
         :type ref_asset: str
