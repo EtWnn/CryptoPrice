@@ -92,25 +92,6 @@ class KlineRetriever(AbstractRetriever):
 
         self.logger.debug(msg)
 
-    def get_klines_locally(self, asset: str, ref_asset: str, timeframe: TIMEFRAME, start_time: int,
-                           end_time: int) -> List[Kline]:
-        """
-        Retrieve the klines saved locally
-
-        :param asset: asset of the trading pair
-        :type asset: str
-        :param ref_asset: reference asset of the trading pair
-        :type ref_asset: str
-        :param timeframe: timeframe for the kline
-        :type timeframe: TIMEFRAME
-        :param start_time: fetch only klines with an open time greater or equal than start_time
-        :type start_time: Optional[int]
-        :param end_time: fetch only klines with an open time lower than end_time
-        :type end_time: Optional[int]
-        :return: list of klines
-        :rtype: List[Kline]
-        """
-
     def get_klines_online(self, asset: str, ref_asset: str, timeframe: TIMEFRAME, start_time: int, end_time: int,
                           retry_count: int = 0) -> List[Kline]:
         """
