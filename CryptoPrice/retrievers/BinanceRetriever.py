@@ -18,7 +18,7 @@ class BinanceRetriever(KlineRetriever):
 
     docs: https://python-binance.readthedocs.io/en/latest/binance.html
     """
-    kline_traduction = {
+    kline_translation = {
         TIMEFRAME.m1: Client.KLINE_INTERVAL_1MINUTE,
         TIMEFRAME.m3: Client.KLINE_INTERVAL_3MINUTE,
         TIMEFRAME.m5: Client.KLINE_INTERVAL_5MINUTE,
@@ -69,7 +69,7 @@ class BinanceRetriever(KlineRetriever):
         """
         pair_name = asset + ref_asset
         batch_size = 1000
-        interval_trad = self.kline_traduction[timeframe]
+        interval_trad = self.kline_translation[timeframe]
         try:
             result = self.client.get_klines(symbol=pair_name, interval=interval_trad, startTime=start_time * 1000,
                                             endTime=end_time * 1000, limit=batch_size)
