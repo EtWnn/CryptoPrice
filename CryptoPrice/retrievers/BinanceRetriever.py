@@ -66,11 +66,11 @@ class BinanceRetriever(KlineRetriever):
         except BinanceAPIException as err:
             if err.code == -1121:
                 self.logger.info(f"The trading pair {asset} {ref_asset} is not supported")
+                return []
             elif err.code == -1003:
                 retry_after = 1 + 60 - datetime.datetime.now().timestamp() % 60
                 raise RateAPIException(retry_after, err.response)
-            else:
-                self.logger.error(str(traceback.format_exc()))
+            self.logger.error(str(traceback.format_exc()))
             raise err
 
         klines = []
