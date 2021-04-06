@@ -157,3 +157,27 @@ class KlineDataBase(DataBase):
         else:
             return None, -1
 
+    def add_cache_closest(self, asset: str, ref_asset: str, timeframe: TIMEFRAME, timestamp: int,
+                          closest_timestamp: int, window: int):
+        """
+        Save the result of a previous closest price request
+
+        :param asset: asset of the trading pair
+        :type asset: str
+        :param ref_asset: reference asset of the trading pair
+        :type ref_asset: str
+        :param timeframe: timeframe for the kline
+        :type timeframe: TIMEFRAME
+        :param timestamp: request timestamp
+        :type timestamp: int
+        :param closest_timestamp: the timestamp that got selected as the closest
+        :type closest_timestamp: int
+        :param window: time window in seconds that got used to fetch the klines
+        :type window: int
+        :return: None
+        :rtype: None
+        """
+        table = KlineCacheTable(asset, ref_asset, timeframe)
+        row = (timestamp, closest_timestamp, window)
+        self.add_row(table, row, update_if_exists=True)
+
