@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, List
 
 from CryptoPrice.common.prices import Price
+from CryptoPrice.common.trade import TradingPair
 from CryptoPrice.utils.LoggerGenerator import LoggerGenerator
 
 
@@ -12,6 +13,16 @@ class AbstractRetriever(ABC):
     def __init__(self, name: str):
         self.name = name
         self.logger = LoggerGenerator.get_logger(self.name)
+        self.supported_pairs = self.get_supported_pairs()
+
+    @abstractmethod
+    def get_supported_pairs(self) -> List[TradingPair]:
+        """
+        Return the list of trading pair supported by this retriever
+
+        :return: list of trading pairs
+        :rtype: List[TradingPair]
+        """
 
     @abstractmethod
     def get_closest_price(self, asset: str, ref_asset: str, timestamp: int) -> Optional[Price]:
