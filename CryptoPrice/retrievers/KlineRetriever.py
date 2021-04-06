@@ -62,7 +62,9 @@ class KlineRetriever(AbstractRetriever):
 
             return Price(kline.open, asset, ref_asset, kline.open_timestamp, kline.source)
 
-        msg = f"no Kline found for {asset}, {ref_asset}, {self.kline_timeframe}, {timestamp}, w={self.closest_window}"
+        msg = f"no Kline found for {asset}, {ref_asset}, {self.kline_timeframe.name}, {timestamp}," \
+              f" w={self.closest_window}"
+
         self.logger.debug(msg)
 
     def get_klines_online(self, asset: str, ref_asset: str, timeframe: TIMEFRAME, start_time: int, end_time: int,
