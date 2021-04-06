@@ -2,7 +2,7 @@ import sqlite3
 from typing import List, Optional, Tuple
 
 from CryptoPrice.storage.DataBase import DataBase, SQLConditionEnum
-from CryptoPrice.storage.prices import Kline
+from CryptoPrice.common.prices import Kline
 from CryptoPrice.storage.tables import KlineTable, KlineCacheTable
 from CryptoPrice.utils.time import TIMEFRAME
 

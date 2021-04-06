@@ -1,11 +1,11 @@
 import time
 from abc import abstractmethod
-from typing import Optional
+from typing import Optional, List
 
 from CryptoPrice.exceptions import RateAPIException
 from CryptoPrice.retrievers.AbstractRetriever import AbstractRetriever
 from CryptoPrice.storage.KlineDataBase import KlineDataBase
-from CryptoPrice.storage.prices import Price
+from CryptoPrice.common.prices import Price, Kline
 from CryptoPrice.utils.time import TIMEFRAME
 
 
@@ -17,7 +17,7 @@ class KlineRetriever(AbstractRetriever):
         self.closest_window = closest_window
         self.kline_timeframe = kline_timeframe
 
-    def get_closest_price(self, asset: str, ref_asset: str, timestamp: int) -> Optional[Price]:
+    def _get_closest_price(self, asset: str, ref_asset: str, timestamp: int) -> Optional[Price]:
         """
         Will get the closest price possible in time for a trading pair asset/ref asset. If no price is found, return
         None.
@@ -25,7 +25,7 @@ class KlineRetriever(AbstractRetriever):
         Try to fetch a local kline first, if the kline is to far from the wanted timestamp, will fetch a batch of kline
         online and return the closest one
 
-        :param asset: name of the asset in the trading paire (ex 'BTC' in 'BTCUSDT')
+        :param asset: name of the asset in the trading pair (ex 'BTC' in 'BTCUSDT')
         :type asset: str
         :param ref_asset: name of the reference asset in the trading pair (ex 'USDT' in 'BTCUSDT')
         :type ref_asset: str
@@ -62,11 +62,13 @@ class KlineRetriever(AbstractRetriever):
 
             return Price(kline.open, asset, ref_asset, kline.open_timestamp, kline.source)
 
-        msg = f"no Kline found for {asset}, {ref_asset}, {self.kline_timeframe}, {timestamp}, w={self.closest_window}"
+        msg = f"no Kline found for {asset}, {ref_asset}, {self.kline_timeframe.name}, {timestamp}," \
+              f" w={self.closest_window}"
+
         self.logger.debug(msg)
 
     def get_klines_online(self, asset: str, ref_asset: str, timeframe: TIMEFRAME, start_time: int, end_time: int,
-                          retry_count: int = 0):
+                          retry_count: int = 0) -> List[Kline]:
         """
         This method handles RateAPIException and calls _get_klines_online which will effectively
         retrieve the online data
@@ -84,7 +86,7 @@ class KlineRetriever(AbstractRetriever):
         :param retry_count: internal use, number of recursive loops done on this method
         :type retry_count: int
         :return: list of klines
-        :rtype: List[Klines]
+        :rtype: List[Kline]
         """
         if retry_count > AbstractRetriever.MAX_API_RETRY:
             raise RuntimeError(f"The API rate limits has been breached {retry_count} times in a row")
@@ -95,7 +97,8 @@ class KlineRetriever(AbstractRetriever):
             return self._get_klines_online(asset, ref_asset, timeframe, start_time, end_time)
 
     @abstractmethod
-    def _get_klines_online(self, asset: str, ref_asset: str, timeframe: TIMEFRAME, start_time: int, end_time: int):
+    def _get_klines_online(self, asset: str, ref_asset: str, timeframe: TIMEFRAME, start_time: int,
+                           end_time: int) -> List[Kline]:
         """
         Fetch klines online, depends on the retriever used (Binance, Kucoin, CoinAPI...)
 
@@ -110,6 +113,6 @@ class KlineRetriever(AbstractRetriever):
         :param end_time: fetch only klines with an open time lower than end_time
         :type end_time: Optional[int]
         :return: list of klines
-        :rtype: List[Klines]
+        :rtype: List[Kline]
         """
         raise NotImplementedError
