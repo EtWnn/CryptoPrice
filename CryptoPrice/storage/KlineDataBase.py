@@ -151,12 +151,9 @@ class KlineDataBase(DataBase):
         """
 
         table = KlineCacheTable(asset, ref_asset, timeframe)
-        conditions_list = [(table.timestamp,
-                            SQLConditionEnum.equal,
-                            timestamp)]
-        rows = self.get_conditions_rows(table, conditions_list=conditions_list)
-        if len(rows):
-            return rows[0][0:]
+        row = self.get_row_by_key(table, timestamp)
+        if row is not None:
+            return row[1:]
         else:
             return None, -1
 
