@@ -3,6 +3,7 @@ from typing import List
 
 from kucoin.client import Market
 
+from CryptoPrice.common.trade import TradingPair
 from CryptoPrice.exceptions import RateAPIException
 from CryptoPrice.retrievers.KlineRetriever import KlineRetriever
 from CryptoPrice.common.prices import Kline
@@ -31,8 +32,18 @@ class KucoinRetriever(KlineRetriever):
     }
 
     def __init__(self, kline_timeframe: TIMEFRAME = TIMEFRAME.m1, closest_window: int = 310):
-        super(KucoinRetriever, self).__init__('kucoin', kline_timeframe, closest_window)
         self.client = Market(url='https://api.kucoin.com')
+        super(KucoinRetriever, self).__init__('kucoin', kline_timeframe, closest_window)
+
+    def get_supported_pairs(self) -> List[TradingPair]:
+        """
+        Return the list of trading pair supported by this retriever
+
+        :return: list of trading pairs
+        :rtype: List[TradingPair]
+        """
+        symbols = self.client.get_symbol_list()
+        return [TradingPair(s['symbol'], s['baseCurrency'], s['quoteCurrency'], source=self.name) for s in symbols]
 
     def _get_klines_online(self, asset: str, ref_asset: str, timeframe: TIMEFRAME,
                            start_time: int, end_time: int) -> List[Kline]:
