@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from CryptoPrice.storage.prices import Price
+from CryptoPrice.common.prices import Price
 from CryptoPrice.utils.LoggerGenerator import LoggerGenerator
 
 

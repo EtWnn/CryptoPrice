@@ -5,7 +5,7 @@ from typing import Optional, List
 from CryptoPrice.exceptions import RateAPIException
 from CryptoPrice.retrievers.AbstractRetriever import AbstractRetriever
 from CryptoPrice.storage.KlineDataBase import KlineDataBase
-from CryptoPrice.storage.prices import Price, Kline
+from CryptoPrice.common.prices import Price, Kline
 from CryptoPrice.utils.time import TIMEFRAME
 
 

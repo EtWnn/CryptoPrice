@@ -7,7 +7,7 @@ from binance.exceptions import BinanceAPIException
 
 from CryptoPrice.exceptions import RateAPIException
 from CryptoPrice.retrievers.KlineRetriever import KlineRetriever
-from CryptoPrice.storage.prices import Kline
+from CryptoPrice.common.prices import Kline
 from CryptoPrice.utils.time import TIMEFRAME
 
 
