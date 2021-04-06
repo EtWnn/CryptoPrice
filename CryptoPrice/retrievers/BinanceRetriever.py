@@ -54,7 +54,7 @@ class BinanceRetriever(KlineRetriever):
         :param end_time: fetch only klines with an open time lower than end_time
         :type end_time: Optional[int]
         :return: list of klines
-        :rtype: List[Klines]
+        :rtype: List[Kline]
         """
         pair_name = asset + ref_asset
         batch_size = 1000

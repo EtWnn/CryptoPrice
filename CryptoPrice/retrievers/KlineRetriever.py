@@ -1,11 +1,11 @@
 import time
 from abc import abstractmethod
-from typing import Optional
+from typing import Optional, List
 
 from CryptoPrice.exceptions import RateAPIException
 from CryptoPrice.retrievers.AbstractRetriever import AbstractRetriever
 from CryptoPrice.storage.KlineDataBase import KlineDataBase
-from CryptoPrice.storage.prices import Price
+from CryptoPrice.storage.prices import Price, Kline
 from CryptoPrice.utils.time import TIMEFRAME
 
 
@@ -68,7 +68,7 @@ class KlineRetriever(AbstractRetriever):
         self.logger.debug(msg)
 
     def get_klines_online(self, asset: str, ref_asset: str, timeframe: TIMEFRAME, start_time: int, end_time: int,
-                          retry_count: int = 0):
+                          retry_count: int = 0) -> List[Kline]:
         """
         This method handles RateAPIException and calls _get_klines_online which will effectively
         retrieve the online data
@@ -86,7 +86,7 @@ class KlineRetriever(AbstractRetriever):
         :param retry_count: internal use, number of recursive loops done on this method
         :type retry_count: int
         :return: list of klines
-        :rtype: List[Klines]
+        :rtype: List[Kline]
         """
         if retry_count > AbstractRetriever.MAX_API_RETRY:
             raise RuntimeError(f"The API rate limits has been breached {retry_count} times in a row")
@@ -97,7 +97,8 @@ class KlineRetriever(AbstractRetriever):
             return self._get_klines_online(asset, ref_asset, timeframe, start_time, end_time)
 
     @abstractmethod
-    def _get_klines_online(self, asset: str, ref_asset: str, timeframe: TIMEFRAME, start_time: int, end_time: int):
+    def _get_klines_online(self, asset: str, ref_asset: str, timeframe: TIMEFRAME, start_time: int,
+                           end_time: int) -> List[Kline]:
         """
         Fetch klines online, depends on the retriever used (Binance, Kucoin, CoinAPI...)
 
@@ -112,6 +113,6 @@ class KlineRetriever(AbstractRetriever):
         :param end_time: fetch only klines with an open time lower than end_time
         :type end_time: Optional[int]
         :return: list of klines
-        :rtype: List[Klines]
+        :rtype: List[Kline]
         """
         raise NotImplementedError
