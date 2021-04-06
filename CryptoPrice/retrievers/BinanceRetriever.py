@@ -13,6 +13,8 @@ from CryptoPrice.utils.time import TIMEFRAME
 
 class BinanceRetriever(KlineRetriever):
     """
+    This class is in charge of fetching klines from the Binance API
+
     docs: https://python-binance.readthedocs.io/en/latest/binance.html
     """
 
@@ -38,22 +40,38 @@ class BinanceRetriever(KlineRetriever):
 
     def _get_klines_online(self, asset: str, ref_asset: str, timeframe: TIMEFRAME,
                            start_time: int, end_time: int) -> List[Kline]:
+        """
+        Fetch klines online by asking the Binance API
+
+        :param asset: asset of the trading pair
+        :type asset: str
+        :param ref_asset: reference asset of the trading pair
+        :type ref_asset: str
+        :param timeframe: timeframe for the kline
+        :type timeframe: TIMEFRAME
+        :param start_time: fetch only klines with an open time greater or equal than start_time
+        :type start_time: Optional[int]
+        :param end_time: fetch only klines with an open time lower than end_time
+        :type end_time: Optional[int]
+        :return: list of klines
+        :rtype: List[Kline]
+        """
         pair_name = asset + ref_asset
         batch_size = 1000
         interval_trad = self.kline_traduction[timeframe]
         try:
             result = self.client.get_klines(symbol=pair_name, interval=interval_trad, startTime=start_time * 1000,
                                             endTime=end_time * 1000, limit=batch_size)
+
         except BinanceAPIException as err:
             if err.code == -1121:
-                self.logger.warning(f"no {timeframe.name} klines for pair {asset} {ref_asset} between {start_time}"
-                                    f" and {end_time}")
+                self.logger.info(f"The trading pair {asset} {ref_asset} is not supported")
+                return []
             elif err.code == -1003:
                 retry_after = 1 + 60 - datetime.datetime.now().timestamp() % 60
                 raise RateAPIException(retry_after, err.response)
-            else:
-                self.logger.error(str(traceback.format_exc()))
-            return []
+            self.logger.error(str(traceback.format_exc()))
+            raise err
 
         klines = []
         for row in result:
