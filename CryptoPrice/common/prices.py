@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import List
 
 from CryptoPrice.utils.time import TIMEFRAME
 
@@ -10,6 +11,14 @@ class Price:
     ref_asset: str
     timestamp: int
     source: str
+
+
+@dataclass
+class MetaPrice:
+    value: float
+    asset: str
+    ref_asset: str
+    prices: List[Price]
 
 
 @dataclass
