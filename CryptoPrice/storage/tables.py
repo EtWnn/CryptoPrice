@@ -52,7 +52,7 @@ class KlineTable(Table):
 class KlineCacheTable(Table):
 
     def __init__(self, asset: str, ref_asset: str, timeframe: TIMEFRAME):
-        name = f"{asset}_{ref_asset}_{timeframe.name}"
+        name = f"{asset}_{ref_asset}_{timeframe.name}_cache"
         super().__init__(name,
                          [
                              "closest",
