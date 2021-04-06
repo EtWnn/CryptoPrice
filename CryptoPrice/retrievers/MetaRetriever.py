@@ -108,6 +108,14 @@ class MetaRetriever(AbstractRetriever):
         return MetaPrice(cumulated_price, seen_assets[0], seen_assets[-1], prices)
 
     def construct_assets_neighbours(self, asset_subsets: List[str]) -> Dict:
+        """
+        Construct a dictionary of neighbours assets, with the trading pairs needed to get from one asset to another
+
+        :param asset_subsets: list of assets to use among supported assets
+        :type asset_subsets: List[str]
+        :return: assets_neighbours
+        :rtype: Dict
+        """
         assets_neighbours = {}
         for pair in self.supported_pairs:
             if pair.asset in asset_subsets and pair.ref_asset in asset_subsets:
