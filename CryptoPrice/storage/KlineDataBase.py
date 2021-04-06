@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple
 
 from CryptoPrice.storage.DataBase import DataBase, SQLConditionEnum
 from CryptoPrice.common.prices import Kline
-from CryptoPrice.storage.tables import KlineTable
+from CryptoPrice.storage.tables import KlineTable, KlineCacheTable
 from CryptoPrice.utils.time import TIMEFRAME
 
 
@@ -131,4 +131,53 @@ class KlineDataBase(DataBase):
         """
         return Kline(*row, asset=asset, ref_asset=ref_asset, timeframe=timeframe, source=self.name)
 
+    def get_cache_closest(self, asset: str, ref_asset: str, timeframe: TIMEFRAME,
+                          timestamp: int) -> Tuple[Optional[int], int]:
+        """
+        Look if a request for the timestamp has been saved in the cache
+        Return the cached timestamp of the previously selected kline along with the window used at that time
+        a timestamp of -1 means that no result were found
+
+        :param asset: asset of the trading pair
+        :type asset: str
+        :param ref_asset: reference asset of the trading pair
+        :type ref_asset: str
+        :param timeframe: timeframe for the kline
+        :type timeframe: TIMEFRAME
+        :param timestamp: request timestamp
+        :type timestamp: int
+        :return: cached_timestamp, window
+        :rtype: Optional[int], int
+        """
+
+        table = KlineCacheTable(asset, ref_asset, timeframe)
+        row = self.get_row_by_key(table, timestamp)
+        if row is not None:
+            return row[1:]
+        else:
+            return None, -1
+
+    def add_cache_closest(self, asset: str, ref_asset: str, timeframe: TIMEFRAME, timestamp: int,
+                          closest_timestamp: int, window: int):
+        """
+        Save the result of a previous closest price request
+
+        :param asset: asset of the trading pair
+        :type asset: str
+        :param ref_asset: reference asset of the trading pair
+        :type ref_asset: str
+        :param timeframe: timeframe for the kline
+        :type timeframe: TIMEFRAME
+        :param timestamp: request timestamp
+        :type timestamp: int
+        :param closest_timestamp: the timestamp that got selected as the closest
+        :type closest_timestamp: int
+        :param window: time window in seconds that got used to fetch the klines
+        :type window: int
+        :return: None
+        :rtype: None
+        """
+        table = KlineCacheTable(asset, ref_asset, timeframe)
+        row = (timestamp, closest_timestamp, window)
+        self.add_row(table, row, update_if_exists=True)
 
