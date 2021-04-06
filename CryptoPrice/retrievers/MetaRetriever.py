@@ -1,6 +1,6 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Tuple
 
-from CryptoPrice.common.prices import Price
+from CryptoPrice.common.prices import Price, MetaPrice
 from CryptoPrice.common.trade import TradingPair
 from CryptoPrice.retrievers.AbstractRetriever import AbstractRetriever
 
@@ -42,3 +42,111 @@ class MetaRetriever(AbstractRetriever):
             if price is not None:
                 return price
 
+    def get_path_price(self, asset: str, ref_asset: str, timestamp: int,
+                       preferred_assets: Optional[List[str]] = None) -> Optional[MetaPrice]:
+        """
+        Will get the closest price possible in time for a trading pair asset/ref asset. If no price is found, return
+        None
+
+        :param asset: name of the asset in the trading pair (ex 'BTC' in 'BTCUSDT')
+        :type asset: str
+        :param ref_asset: name of the reference asset in the trading pair (ex 'USDT' in 'BTCUSDT')
+        :type ref_asset: str
+        :param timestamp: time to fetch the price needed (in seconds)
+        :type timestamp: int
+        :param preferred_assets: list of assets to construct the price path from. If None, default value is
+            ['BTC', 'USDT', 'BUSD', 'ETH']
+        :type preferred_assets: Optional[List[str]]
+        :return: the price closest in time found or None if no price found
+        :rtype: Optional[MetaPrice]
+        """
+        if preferred_assets is None:
+            preferred_assets = ['BTC', 'ETH']
+
+        assets_neighbours = self.construct_assets_neighbours(preferred_assets + [asset, ref_asset])
+
+        if asset not in assets_neighbours or ref_asset not in assets_neighbours:
+            yield None
+            return
+
+        seen_assets = [asset]
+        current_path = []
+        for assets_p, trade_p in self._explore_assets_path(ref_asset, assets_neighbours, seen_assets, current_path):
+            yield self.create_meta_price(timestamp, assets_p, trade_p)
+
+    def create_meta_price(self, timestamp: int, seen_assets: List[str],
+                          trading_path: List[TradingPair]) -> Optional[MetaPrice]:
+        """
+        Will try to create a price from a trading path
+
+        :param timestamp: time to fetch the price needed (in seconds)
+        :type timestamp: int
+        :param seen_assets: list of assets to use (in order)
+        :type seen_assets: List[str]
+        :param trading_path: list of trading pair to use to follow the path
+        :type trading_path: List[TradingPair]
+        :return: the meta price associated if possible
+        :rtype: Optional[MetaPrice]
+        """
+        cumulated_price = 1.
+        prices = []
+        for i, pair in enumerate(trading_path):
+            current_asset, next_asset = seen_assets[i:i+2]
+            price = self.retrievers[pair.source].get_closest_price(pair.asset, pair.ref_asset, timestamp)
+            if price is None:
+                return
+            else:
+                prices.append(price)
+                if price.asset == next_asset:
+                    cumulated_price /= price.value
+                else:
+                    cumulated_price *= price.value
+        return MetaPrice(cumulated_price, seen_assets[0], seen_assets[-1], prices)
+
+    def construct_assets_neighbours(self, asset_subsets: List[str]) -> Dict:
+        assets_neighbours = {}
+        for pair in self.supported_pairs:
+            if pair.asset in asset_subsets and pair.ref_asset in asset_subsets:
+                try:
+                    assets_neighbours[pair.asset][pair.ref_asset].append(pair)
+                except KeyError:
+                    try:
+                        assets_neighbours[pair.asset][pair.ref_asset] = [pair]
+                    except KeyError:
+                        assets_neighbours[pair.asset] = {pair.ref_asset: [pair]}
+
+                try:
+                    assets_neighbours[pair.ref_asset][pair.asset].append(pair)
+                except KeyError:
+                    try:
+                        assets_neighbours[pair.ref_asset][pair.asset] = [pair]
+                    except KeyError:
+                        assets_neighbours[pair.ref_asset] = {pair.asset: [pair]}
+        return assets_neighbours
+
+    def _explore_assets_path(self, target_asset: str, assets_neighbours: Dict, seen_assets: List[str],
+                             current_path: List[TradingPair]) -> Tuple[List[str], List[TradingPair]]:
+        """
+        Iterator that will explore the trading possibilities to link one asset to another one through a trading path
+
+        :param target_asset: asset to look for
+        :type target_asset: str
+        :param assets_neighbours: dictionary of neighbours for assets
+        :type assets_neighbours: Dict
+        :param seen_assets: assets already seen on the path
+        :type seen_assets: List[str]
+        :param current_path: trading pair to use (in order) to follow the path to the target asset
+        :type current_path: List[TradingPair]
+        :return: list of assets to explore and the trading path to take
+        :rtype: Tuple[List[str], List[TradingPair]]
+        """
+        current_asset = seen_assets[-1]
+        for next_asset in assets_neighbours[current_asset]:
+            if next_asset not in seen_assets:
+                for pair in assets_neighbours[current_asset][next_asset]:
+                    if next_asset == target_asset:
+                        yield seen_assets + [next_asset], current_path + [pair]
+                    else:
+                        for result in self._explore_assets_path(target_asset, assets_neighbours,
+                                                                seen_assets + [next_asset], current_path + [pair]):
+                            yield result
