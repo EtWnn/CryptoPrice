@@ -36,16 +36,37 @@ class KucoinRetriever(KlineRetriever):
 
     def _get_klines_online(self, asset: str, ref_asset: str, timeframe: TIMEFRAME,
                            start_time: int, end_time: int) -> List[Kline]:
+        """
+        Fetch klines online by asking the Kucoin API
+
+        :param asset: asset of the trading pair
+        :type asset: str
+        :param ref_asset: reference asset of the trading pair
+        :type ref_asset: str
+        :param timeframe: timeframe for the kline
+        :type timeframe: TIMEFRAME
+        :param start_time: fetch only klines with an open time greater or equal than start_time
+        :type start_time: Optional[int]
+        :param end_time: fetch only klines with an open time lower than end_time
+        :type end_time: Optional[int]
+        :return: list of klines
+        :rtype: List[Klines]
+        """
         pair_name = f"{asset}-{ref_asset}"
         batch_size = 1500
         interval_trad = self.kline_traduction[timeframe]
         try:
             result = self.client.get_kline(symbol=pair_name, kline_type=interval_trad, startAt=start_time,
                                            endAt=end_time, pageSize=batch_size)
+            if not isinstance(result, List):  # valid trading pair but no data
+                return []
         except Exception as e:
-            if len(e.args) and "403" in e.args[0]:  # Kucoin exception for rate limit
-                retry_after = 1 + 60 - datetime.datetime.now().timestamp() % 60  # time until next minute
-                raise RateAPIException(retry_after)
+            if len(e.args):
+                if "403" in e.args[0]:  # Kucoin exception for rate limit
+                    retry_after = 1 + 60 - datetime.datetime.now().timestamp() % 60  # time until next minute
+                    raise RateAPIException(retry_after)
+                elif "400100" in e.args[0]:  # invalid parameters -> trading pair not supported
+                    return []
             raise e
         klines = []
         for row in result:
