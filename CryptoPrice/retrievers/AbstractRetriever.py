@@ -23,6 +23,7 @@ class AbstractRetriever(ABC):
         :return: list of trading pairs
         :rtype: List[TradingPair]
         """
+        raise NotImplementedError
 
     def get_closest_price(self, asset: str, ref_asset: str, timestamp: int) -> Optional[Price]:
         """
