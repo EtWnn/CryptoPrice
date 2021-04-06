@@ -34,38 +34,82 @@ class KlineRetriever(AbstractRetriever):
         :return: the price closest in time found or None if no price found
         :rtype: Optional[Price]
         """
-        # first get closest kline locally
-        kline = self.db.get_closest_kline(asset, ref_asset, self.kline_timeframe, timestamp, window=self.closest_window)
-
-        if kline is not None:
-            if abs(kline.open_timestamp - timestamp) < self.kline_timeframe.value * 60 / 2:
-                return Price(kline.open, asset, ref_asset, kline.open_timestamp, kline.source)
+        closest_kline = None
+        # first let's see if there is a cached result
+        closest_timestamp, window = self.db.get_cache_closest(asset, ref_asset, self.kline_timeframe, timestamp)
+        if closest_timestamp is not None and window <= self.closest_window:
+            if closest_timestamp == -1:  # no closest kline can be found
+                self.logger.debug(f"cache indicates that no klines can be retrieved for {asset} {ref_asset}"
+                                  f" {self.kline_timeframe.name} {timestamp} and window {self.closest_window}")
+                return None
+            klines = self.db.get_klines(asset, ref_asset, self.kline_timeframe,
+                                        start_time=closest_timestamp, end_time=closest_timestamp + 1)
+            if len(klines):
+                self.logger.debug(f"A result was cached for {asset} {ref_asset} {self.kline_timeframe.name} {timestamp}"
+                                  f" and it was found in the database")
+                closest_kline = klines[0]
             else:
-                msg = f"{timestamp} and {kline.open_timestamp} are to far apart for {self.kline_timeframe.name}," \
-                      f" fetching online"
-                self.logger.debug(msg)
-        else:
-            msg = f"no kline in around time {timestamp} with a {self.closest_window} window, fetching online"
-            self.logger.debug(msg)
+                self.logger.error(f"A result was cached for {asset} {ref_asset} {self.kline_timeframe.name} {timestamp}"
+                                  f" but it was not found in the database")
 
-        klines = self.get_klines_online(asset, ref_asset, self.kline_timeframe,
-                                        timestamp - self.closest_window,
-                                        timestamp + self.closest_window)
-        self.db.add_klines(klines, ignore_if_exists=True)
+        if closest_kline is None:
+            # first get closest kline locally
+            closest_kline = self.db.get_closest_kline(asset, ref_asset, self.kline_timeframe,
+                                                      timestamp, window=self.closest_window)
 
-        kline = self.db.get_closest_kline(asset, ref_asset, self.kline_timeframe, timestamp, window=self.closest_window)
+            if closest_kline is not None:
+                time_delta = abs(closest_kline.open_timestamp - timestamp)
+                if time_delta > self.kline_timeframe.value * 60 / 2:
+                    self.logger.debug(f"{timestamp} and {closest_kline.open_timestamp} are to far apart "
+                                      f"for {self.kline_timeframe.name}, fetching online")
+                    closest_kline = None
+                else:
+                    self.logger.debug(f"a kline already in the database is close enough to the wanted timestamp")
+            else:
+                self.logger.debug(f"no kline in the database around time {timestamp} with"
+                                  f" a {self.closest_window} window, fetching online")
 
-        closest_open_timestamp = -1
-        if kline is not None:
-            closest_open_timestamp = kline.open_timestamp
-            # TODO cache result to avoid fetching over and over the API
+            if closest_kline is None:  # fetching online
+                klines = self.get_klines_online(asset, ref_asset, self.kline_timeframe,
+                                                timestamp - self.closest_window,
+                                                timestamp + self.closest_window)
+                self.db.add_klines(klines, ignore_if_exists=True)
 
-            return Price(kline.open, asset, ref_asset, kline.open_timestamp, kline.source)
+                closest_kline = self.db.get_closest_kline(asset, ref_asset, self.kline_timeframe,
+                                                          timestamp, window=self.closest_window)
+
+            closest_open_timestamp = -1
+            if closest_kline is not None:
+                closest_open_timestamp = closest_kline.open_timestamp
+            self.db.add_cache_closest(asset, ref_asset, self.kline_timeframe, timestamp,
+                                      closest_open_timestamp, self.closest_window)
+
+        if closest_kline is not None:
+            return Price(closest_kline.open, asset, ref_asset, closest_kline.open_timestamp, closest_kline.source)
 
         msg = f"no Kline found for {asset}, {ref_asset}, {self.kline_timeframe.name}, {timestamp}," \
               f" w={self.closest_window}"
 
         self.logger.debug(msg)
+
+    def get_klines_locally(self, asset: str, ref_asset: str, timeframe: TIMEFRAME, start_time: int,
+                           end_time: int) -> List[Kline]:
+        """
+        Retrieve the klines saved locally
+
+        :param asset: asset of the trading pair
+        :type asset: str
+        :param ref_asset: reference asset of the trading pair
+        :type ref_asset: str
+        :param timeframe: timeframe for the kline
+        :type timeframe: TIMEFRAME
+        :param start_time: fetch only klines with an open time greater or equal than start_time
+        :type start_time: Optional[int]
+        :param end_time: fetch only klines with an open time lower than end_time
+        :type end_time: Optional[int]
+        :return: list of klines
+        :rtype: List[Kline]
+        """
 
     def get_klines_online(self, asset: str, ref_asset: str, timeframe: TIMEFRAME, start_time: int, end_time: int,
                           retry_count: int = 0) -> List[Kline]:
