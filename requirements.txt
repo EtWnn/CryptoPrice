@@ -1,0 +1,6 @@
+requests
+appdirs
+sphinx
+sphinx_rtd_theme
+python-binance
+kucoin-python
