@@ -1,5 +1,5 @@
 from queue import Queue
-from typing import List, Optional, Dict, Tuple
+from typing import List, Optional, Dict, Tuple, Iterator
 
 from CryptoPrice.common.prices import Price, MetaPrice
 from CryptoPrice.common.trade import TradingPair
@@ -43,15 +43,53 @@ class MetaRetriever(AbstractRetriever):
             if price is not None:
                 return price
 
-    def get_path_price(self, asset: str, ref_asset: str, timestamp: int,
-                       preferred_assets: Optional[List[str]] = None, max_depth: int = 3) -> Optional[MetaPrice]:
+    def get_mean_price(self, asset: str, ref_asset: str, timestamp: int, preferred_assets: Optional[List[str]] = None,
+                       max_depth: int = 2, max_plateau: int = 1) -> Optional[MetaPrice]:
         """
-        Iterator that will get the closest price possible in time for a trading pair asset/ref asset.
+        Will use the method get_path_price and return the mean price of an asset compared to a reference asset
+        on a given timestamp.
+
+        :param asset: name of the asset to get the price of
+        :type asset: str
+        :param ref_asset: name of the reference asset
+        :type ref_asset: str
+        :param timestamp: time to fetch the price needed (in seconds)
+        :type timestamp: int
+        :param preferred_assets: list of assets to construct the price path from. If None, default value is
+            ['BTC', 'ETH']
+        :type preferred_assets: Optional[List[str]]
+        :param max_depth: maximum number of trading pair to use, default 3
+        :type max_depth: int
+        :param max_plateau: maximum number of plateau to consider. A plateau is a group of trading path with the
+            same number of trading pair. For example, a max_plateau of 2 will allow trading path with a length of 1 and
+            2 (or length of 2 and 3, depending of the minimum length)
+        :type max_plateau: int
+        :return: Metaprice reflecting the value calculated with a mean of trading path
+        :rtype: Optional[MetaPrice]
+        """
+        meta_prices = []
+        min_plateau = None
+        for meta_price in self.get_path_price(asset, ref_asset, timestamp, preferred_assets, max_depth):
+            if meta_price is not None:
+                if min_plateau is None:
+                    min_plateau = len(meta_price.prices)
+                elif len(meta_price.prices) >= min_plateau + max_plateau:
+                    break
+                meta_prices.append(meta_price)
+        if len(meta_prices):
+            return MetaPrice.mean_from_meta_price(meta_prices)
+
+    def get_path_price(self, asset: str, ref_asset: str, timestamp: int,
+                       preferred_assets: Optional[List[str]] = None, max_depth: int = 3) -> Iterator[MetaPrice]:
+        """
+        Iterator that return MetaPrices that estimates the price of an asset compared to a reference asset.
+        It will use the trading pair at its disposal to create trading path from the asset to the ref asset.
+        It use a BFS algorithm, so the shortest path will be returned first.
         If no price is found, return None
 
-        :param asset: name of the asset in the trading pair (ex 'BTC' in 'BTCUSDT')
+        :param asset: name of the asset to get the price of
         :type asset: str
-        :param ref_asset: name of the reference asset in the trading pair (ex 'USDT' in 'BTCUSDT')
+        :param ref_asset: name of the reference asset
         :type ref_asset: str
         :param timestamp: time to fetch the price needed (in seconds)
         :type timestamp: int
@@ -60,7 +98,7 @@ class MetaRetriever(AbstractRetriever):
         :type preferred_assets: Optional[List[str]]
         :param max_depth: maximum number of trading pair to use, default 3
         :type max_depth: int
-        :return: the price closest in time found or None if no price found
+        :return: Metaprice reflecting the value calculated through a trading path
         :rtype: Optional[MetaPrice]
         """
         if preferred_assets is None:
@@ -76,36 +114,15 @@ class MetaRetriever(AbstractRetriever):
         current_path = []
         for assets_p, trade_p in self._explore_assets_path(ref_asset, assets_neighbours, seen_assets,
                                                            current_path, max_depth=max_depth):
-            yield self.create_meta_price(timestamp, assets_p, trade_p)
-
-    def create_meta_price(self, timestamp: int, seen_assets: List[str],
-                          trading_path: List[TradingPair]) -> Optional[MetaPrice]:
-        """
-        Will try to create a price from a trading path
-
-        :param timestamp: time to fetch the price needed (in seconds)
-        :type timestamp: int
-        :param seen_assets: list of assets to use (in order)
-        :type seen_assets: List[str]
-        :param trading_path: list of trading pair to use to follow the path
-        :type trading_path: List[TradingPair]
-        :return: the meta price associated if possible
-        :rtype: Optional[MetaPrice]
-        """
-        cumulated_price = 1.
-        prices = []
-        for i, pair in enumerate(trading_path):
-            current_asset, next_asset = seen_assets[i:i + 2]
-            price = self.retrievers[pair.source].get_closest_price(pair.asset, pair.ref_asset, timestamp)
-            if price is None:
-                return
-            else:
-                prices.append(price)
-                if price.asset == next_asset:
-                    cumulated_price /= price.value
+            price_path = []
+            for pair in trade_p:
+                price = self.retrievers[pair.source].get_closest_price(pair.asset, pair.ref_asset, timestamp)
+                if price is not None:
+                    price_path.append(price)
                 else:
-                    cumulated_price *= price.value
-        return MetaPrice(cumulated_price, seen_assets[0], seen_assets[-1], prices)
+                    break
+            if len(price_path) + 1 == len(assets_p):  # all prices have been found
+                yield MetaPrice.from_price_path(assets_p, price_path)
 
     def construct_assets_neighbours(self, asset_subsets: List[str]) -> Dict:
         """
@@ -139,7 +156,7 @@ class MetaRetriever(AbstractRetriever):
     @staticmethod
     def _explore_assets_path(target_asset: str, assets_neighbours: Dict,
                              seen_assets: List[str], current_path: List[TradingPair],
-                             max_depth: int = 3) -> Tuple[List[str], List[TradingPair]]:
+                             max_depth: int = 3) -> Iterator[Tuple[List[str], List[TradingPair]]]:
         """
         Iterator that will explore the trading possibilities to link one asset to another one through a trading path
 
