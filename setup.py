@@ -11,7 +11,7 @@ with open(os.path.join(this_directory, 'CryptoPrice/__init__.py'), encoding='utf
     exec(f.read(), about)
 
 setup(
-    name='CryptoPrice',
+    name='python-CryptoPrice',
     version=about['__version__'],
     packages=['CryptoPrice',
               'CryptoPrice.retrievers',

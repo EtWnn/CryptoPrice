@@ -4,11 +4,11 @@ Getting Started
 Installation
 ------------
 
-``CryptoPrice`` is available on `PYPI <https://pypi.org/project/CryptoPrice/>`_, install with ``pip``:
+``CryptoPrice`` is available on `PYPI <https://pypi.org/project/python-CryptoPrice/>`_, install with ``pip``:
 
 .. code:: bash
 
-    pip install CryptoPrice
+    pip install python-CryptoPrice
 
 You can also install the latest developments (not stable):
 
