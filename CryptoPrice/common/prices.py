@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import List
+from typing import List, Union
 
 from CryptoPrice.utils.time import TIMEFRAME
 
@@ -19,7 +19,29 @@ class MetaPrice:
     value: float
     asset: str
     ref_asset: str
-    prices: List[Price]
+    prices: List[Union[Price, MetaPrice]]
+    source: str = ''
+
+    @staticmethod
+    def mean_from_meta_price(meta_prices: List[MetaPrice]) -> MetaPrice:
+        """
+        Return the mean price from a list of meta price
+
+        :param meta_prices: list of meta price with the same asset and ref assets
+        :type meta_prices:
+        :return: the mean Meta price
+        :rtype: MetaPrice
+        """
+        if len(meta_prices) == 0:
+            raise ValueError("at least one MetaPrice is needed")
+        asset = meta_prices[0].asset
+        ref_asset = meta_prices[1].asset
+        cum_value = 0
+        for meta_price in meta_prices:
+            if (asset, ref_asset) != (meta_price.asset, meta_price.ref_asset):
+                raise ValueError("asset and ref asset are inconsistent")
+            cum_value += meta_price.value
+        return MetaPrice(cum_value / len(meta_prices), asset, ref_asset, meta_prices, source="mean_meta")
 
     @staticmethod
     def from_price_path(assets: List[str], price_path: List[Price]) -> MetaPrice:
@@ -44,7 +66,7 @@ class MetaPrice:
                 cumulated_price /= price.value
             else:
                 cumulated_price *= price.value
-        return MetaPrice(cumulated_price, assets[0], assets[-1], price_path)
+        return MetaPrice(cumulated_price, assets[0], assets[-1], price_path, source='price_path')
 
 
 @dataclass
