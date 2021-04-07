@@ -35,7 +35,7 @@ class MetaPrice:
         if len(meta_prices) == 0:
             raise ValueError("at least one MetaPrice is needed")
         asset = meta_prices[0].asset
-        ref_asset = meta_prices[1].asset
+        ref_asset = meta_prices[0].ref_asset
         cum_value = 0
         for meta_price in meta_prices:
             if (asset, ref_asset) != (meta_price.asset, meta_price.ref_asset):
