@@ -1,5 +1,5 @@
 ===============================
-Welcome to CryptoPrice 0.1.0dev
+Welcome to CryptoPrice 0.1.0
 ===============================
 
 
