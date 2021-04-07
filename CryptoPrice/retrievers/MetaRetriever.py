@@ -76,36 +76,15 @@ class MetaRetriever(AbstractRetriever):
         current_path = []
         for assets_p, trade_p in self._explore_assets_path(ref_asset, assets_neighbours, seen_assets,
                                                            current_path, max_depth=max_depth):
-            yield self.create_meta_price(timestamp, assets_p, trade_p)
-
-    def create_meta_price(self, timestamp: int, seen_assets: List[str],
-                          trading_path: List[TradingPair]) -> Optional[MetaPrice]:
-        """
-        Will try to create a price from a trading path
-
-        :param timestamp: time to fetch the price needed (in seconds)
-        :type timestamp: int
-        :param seen_assets: list of assets to use (in order)
-        :type seen_assets: List[str]
-        :param trading_path: list of trading pair to use to follow the path
-        :type trading_path: List[TradingPair]
-        :return: the meta price associated if possible
-        :rtype: Optional[MetaPrice]
-        """
-        cumulated_price = 1.
-        prices = []
-        for i, pair in enumerate(trading_path):
-            current_asset, next_asset = seen_assets[i:i + 2]
-            price = self.retrievers[pair.source].get_closest_price(pair.asset, pair.ref_asset, timestamp)
-            if price is None:
-                return
-            else:
-                prices.append(price)
-                if price.asset == next_asset:
-                    cumulated_price /= price.value
+            price_path = []
+            for pair in trade_p:
+                price = self.retrievers[pair.source].get_closest_price(pair.asset, pair.ref_asset, timestamp)
+                if price is not None:
+                    price_path.append(price)
                 else:
-                    cumulated_price *= price.value
-        return MetaPrice(cumulated_price, seen_assets[0], seen_assets[-1], prices)
+                    break
+            if len(price_path) + 1 == len(assets_p):  # all prices have been found
+                yield MetaPrice.from_price_path(assets_p, price_path)
 
     def construct_assets_neighbours(self, asset_subsets: List[str]) -> Dict:
         """
