@@ -5,6 +5,7 @@ from CryptoPrice.utils.time import TIMEFRAME
 
 class Table:
     """
+    This class represent a table of a database
     @DynamicAttrs
     """
 
@@ -28,7 +29,6 @@ class Table:
 
 
 class KlineTable(Table):
-
     def __init__(self, asset: str, ref_asset: str, timeframe: TIMEFRAME):
         name = f"{asset}_{ref_asset}_{timeframe.name}"
         super().__init__(name,

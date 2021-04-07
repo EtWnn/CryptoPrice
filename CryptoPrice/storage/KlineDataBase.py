@@ -10,6 +10,12 @@ from CryptoPrice.utils.time import TIMEFRAME
 class KlineDataBase(DataBase):
 
     def __init__(self, name: str):
+        """
+        Instantiate a kline database object, the name will be used for the saving file
+
+        :param name: name of the database
+        :type name: str
+        """
         super().__init__(name)
 
     def add_klines(self, klines: List[Kline], ignore_if_exists: bool = False):
