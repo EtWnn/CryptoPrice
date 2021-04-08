@@ -44,9 +44,9 @@ class MetaRetriever(AbstractRetriever):
                 return price
 
     def get_mean_price(self, asset: str, ref_asset: str, timestamp: int, preferred_assets: Optional[List[str]] = None,
-                       max_depth: int = 2, max_plateau: int = 1) -> Optional[MetaPrice]:
+                       max_depth: int = 3, max_depth_range: int = 0) -> Optional[MetaPrice]:
         """
-        Will use the method get_path_price and return the mean price of an asset compared to a reference asset
+        Will use the method get_path_prices and return the mean price of an asset compared to a reference asset
         on a given timestamp.
 
         :param asset: name of the asset to get the price of
@@ -60,33 +60,31 @@ class MetaRetriever(AbstractRetriever):
         :type preferred_assets: Optional[List[str]]
         :param max_depth: maximum number of trading pair to use, default 3
         :type max_depth: int
-        :param max_plateau: maximum number of plateau to consider. A plateau is a group of trading path with the
-            same number of trading pair. For example, a max_plateau of 2 will allow trading path with a length of 1 and
-            2 (or length of 2 and 3, depending of the minimum length)
-        :type max_plateau: int
+        :param max_depth_range: maximum length difference between different trading path. If the first trading path has
+            a length of 1 and this parameter is equal to 2, trading_path with a length superior to 3 will be ignored
+        :type max_depth_range: int
         :return: Metaprice reflecting the value calculated with a mean of trading path
         :rtype: Optional[MetaPrice]
         """
         meta_prices = []
-        min_plateau = None
-        for meta_price in self.get_path_price(asset, ref_asset, timestamp, preferred_assets, max_depth):
+        for meta_price in self.get_path_prices(asset, ref_asset, timestamp, preferred_assets,
+                                               max_depth, max_depth_range):
             if meta_price is not None:
-                if min_plateau is None:
-                    min_plateau = len(meta_price.prices)
-                elif len(meta_price.prices) >= min_plateau + max_plateau:
-                    break
                 meta_prices.append(meta_price)
         if len(meta_prices):
             return MetaPrice.mean_from_meta_price(meta_prices)
 
-    def get_path_price(self, asset: str, ref_asset: str, timestamp: int,
-                       preferred_assets: Optional[List[str]] = None, max_depth: int = 3) -> Iterator[MetaPrice]:
+    def get_path_prices(self, asset: str, ref_asset: str, timestamp: int,
+                        preferred_assets: Optional[List[str]] = None, max_depth: int = 2,
+                        max_depth_range: int = -1) -> Iterator[MetaPrice]:
         """
         Iterator that return MetaPrices that estimates the price of an asset compared to a reference asset.
         It will use the trading pair at its disposal to create trading path from the asset to the ref asset.
         It use a BFS algorithm, so the shortest path will be returned first.
         If no price is found, return None
 
+        :param max_depth_range:
+        :type max_depth_range:
         :param asset: name of the asset to get the price of
         :type asset: str
         :param ref_asset: name of the reference asset
@@ -94,10 +92,14 @@ class MetaRetriever(AbstractRetriever):
         :param timestamp: time to fetch the price needed (in seconds)
         :type timestamp: int
         :param preferred_assets: list of assets to construct the price path from. If None, default value is
-            ['BTC', 'USDT', 'BUSD', 'ETH']
+            ['BTC', 'ETH']
         :type preferred_assets: Optional[List[str]]
-        :param max_depth: maximum number of trading pair to use, default 3
+        :param max_depth: maximum number of trading pair to use, default 2
         :type max_depth: int
+        :param max_depth_range: maximum length difference between different trading path. If the first trading path has
+            a length of 1 and this parameter is equal to 2, trading_path with a length superior to 3 will be ignored.
+            Default -1 means that this parameter is ignored.
+        :type max_depth_range: int
         :return: Metaprice reflecting the value calculated through a trading path
         :rtype: Optional[MetaPrice]
         """
@@ -113,7 +115,8 @@ class MetaRetriever(AbstractRetriever):
         seen_assets = [asset]
         current_path = []
         for assets_p, trade_p in self._explore_assets_path(ref_asset, assets_neighbours, seen_assets,
-                                                           current_path, max_depth=max_depth):
+                                                           current_path, max_depth=max_depth,
+                                                           max_depth_range=max_depth_range):
             price_path = []
             for pair in trade_p:
                 price = self.retrievers[pair.source].get_closest_price(pair.asset, pair.ref_asset, timestamp)
@@ -155,8 +158,8 @@ class MetaRetriever(AbstractRetriever):
 
     @staticmethod
     def _explore_assets_path(target_asset: str, assets_neighbours: Dict,
-                             seen_assets: List[str], current_path: List[TradingPair],
-                             max_depth: int = 3) -> Iterator[Tuple[List[str], List[TradingPair]]]:
+                             seen_assets: List[str], current_path: List[TradingPair], max_depth: int = 3,
+                             max_depth_range: int = -1) -> Iterator[Tuple[List[str], List[TradingPair]]]:
         """
         Iterator that will explore the trading possibilities to link one asset to another one through a trading path
 
@@ -170,18 +173,31 @@ class MetaRetriever(AbstractRetriever):
         :type current_path: List[TradingPair]
         :param max_depth: maximum number of trading pair to use, default 3
         :type max_depth: int
+        :param max_depth_range: maximum length difference between different trading path. If the first trading path has
+            a length of 1 and this parameter is equal to 2, trading_path with a length superior to 3 will be ignored.
+            Default -1 means that this parameter is ignored.
+        :type max_depth_range: int
         :return: list of assets to explore and the trading path to take
         :rtype: Tuple[List[str], List[TradingPair]]
         """
         to_explore = Queue()
         to_explore.put((seen_assets, current_path))
+        min_depth = None
         while to_explore.qsize():
             seen_assets, current_path = to_explore.get()
             current_asset = seen_assets[-1]
+            if min_depth is not None and len(current_path) + 1 - min_depth > max_depth_range:
+                break
+
             for next_asset in assets_neighbours[current_asset]:
+
                 if next_asset not in seen_assets:
+
                     for pair in assets_neighbours[current_asset][next_asset]:
                         if next_asset == target_asset:
+                            if min_depth is None and max_depth_range >= 0:
+                                min_depth = len(current_path) + 1
                             yield seen_assets + [next_asset], current_path + [pair]
+
                         elif len(current_path) + 1 < max_depth:
                             to_explore.put((seen_assets + [next_asset], current_path + [pair]))
