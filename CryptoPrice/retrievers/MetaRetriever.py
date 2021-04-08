@@ -44,7 +44,7 @@ class MetaRetriever(AbstractRetriever):
                 return price
 
     def get_mean_price(self, asset: str, ref_asset: str, timestamp: int, preferred_assets: Optional[List[str]] = None,
-                       max_depth: int = 2, max_depth_range: int = 0) -> Optional[MetaPrice]:
+                       max_depth: int = 3, max_depth_range: int = 0) -> Optional[MetaPrice]:
         """
         Will use the method get_path_prices and return the mean price of an asset compared to a reference asset
         on a given timestamp.
@@ -58,7 +58,7 @@ class MetaRetriever(AbstractRetriever):
         :param preferred_assets: list of assets to construct the price path from. If None, default value is
             ['BTC', 'ETH']
         :type preferred_assets: Optional[List[str]]
-        :param max_depth: maximum number of trading pair to use, default 2
+        :param max_depth: maximum number of trading pair to use, default 3
         :type max_depth: int
         :param max_depth_range: maximum length difference between different trading path. If the first trading path has
             a length of 1 and this parameter is equal to 2, trading_path with a length superior to 3 will be ignored
