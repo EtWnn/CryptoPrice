@@ -39,6 +39,8 @@ class AbstractRetriever(ABC):
         :return: the price closest in time found or None if no price found
         :rtype: Optional[Price]
         """
+        if asset == ref_asset:
+            return Price(1, asset, ref_asset, timestamp, source='')
         trading_pair = TradingPair('', asset, ref_asset, '')
         if trading_pair not in self.supported_pairs:
             return
