@@ -54,7 +54,9 @@ A price retriever is already provided by the library, but feel free to check the
 .. code-block:: python
 
     import datetime
-    from CryptoPrice import retriever
+    from CryptoPrice import get_default_retriever
+
+    retriever = get_default_retriever()
 
     asset = 'BTC'
     ref_asset = 'USDT'
@@ -74,7 +76,9 @@ than the one above as several API calls (or database requests) have to be made.
 .. code-block:: python
 
     import datetime
-    from CryptoPrice import retriever
+    from CryptoPrice import get_default_retriever
+
+    retriever = get_default_retriever()
 
     asset = 'LTC'
     ref_asset = 'XRP'
