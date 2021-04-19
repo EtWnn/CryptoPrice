@@ -5,7 +5,7 @@ from typing import List, Union
 from CryptoPrice.utils.time import TIMEFRAME
 
 
-@dataclass
+@dataclass(frozen=True)
 class Price:
     value: float
     asset: str
@@ -14,7 +14,7 @@ class Price:
     source: str
 
 
-@dataclass
+@dataclass(frozen=True)
 class MetaPrice:
     value: float
     asset: str
