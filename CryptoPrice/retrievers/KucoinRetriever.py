@@ -72,11 +72,15 @@ class KucoinRetriever(KlineRetriever):
             if not isinstance(result, List):  # valid trading pair but no data
                 return []
         except Exception as e:
-            if len(e.args):
-                if "403" in e.args[0]:  # Kucoin exception for rate limit
+            if e.__class__ == Exception:  # kucoin.client's exceptions are from the base class only
+                try:
+                    error_content = e.args[0]  # error code and error message from kucoin.client are in a single string
+                except (IndexError, TypeError):
+                    raise e
+                if "403" in error_content:  # kucoin.client's for rate limit
                     retry_after = 1 + 60 - datetime.datetime.now().timestamp() % 60  # time until next minute
                     raise RateAPIException(retry_after)
-                elif "400100" in e.args[0]:  # invalid parameters -> trading pair not supported
+                elif "400100" in error_content:  # invalid parameters -> trading pair not supported
                     return []
             raise e
         klines = []
