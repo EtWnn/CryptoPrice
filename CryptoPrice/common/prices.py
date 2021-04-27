@@ -1,11 +1,11 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import List, Union
+from typing import List, Union, Set
 
 from CryptoPrice.utils.time import TIMEFRAME
 
 
-@dataclass
+@dataclass(frozen=True)
 class Price:
     value: float
     asset: str
@@ -14,13 +14,13 @@ class Price:
     source: str
 
 
-@dataclass
+@dataclass(frozen=True)
 class MetaPrice:
     value: float
     asset: str
     ref_asset: str
     prices: List[Union[Price, MetaPrice]]
-    source: str = ''
+    source: Set[str]
 
     @staticmethod
     def mean_from_meta_price(meta_prices: List[MetaPrice]) -> MetaPrice:
@@ -32,6 +32,7 @@ class MetaPrice:
         :return: the mean Meta price
         :rtype: MetaPrice
         """
+        source = set()
         if len(meta_prices) == 0:
             raise ValueError("at least one MetaPrice is needed")
         asset = meta_prices[0].asset
@@ -41,7 +42,8 @@ class MetaPrice:
             if (asset, ref_asset) != (meta_price.asset, meta_price.ref_asset):
                 raise ValueError("asset and ref asset are inconsistent")
             cum_value += meta_price.value
-        return MetaPrice(cum_value / len(meta_prices), asset, ref_asset, meta_prices, source="mean_meta")
+            source.update(meta_price.source)
+        return MetaPrice(cum_value / len(meta_prices), asset, ref_asset, meta_prices, source=source)
 
     @staticmethod
     def from_price_path(assets: List[str], price_path: List[Price]) -> MetaPrice:
@@ -55,6 +57,7 @@ class MetaPrice:
         :return: the MetaPrice representing the price between the first and the last asset
         :rtype: MetaPrice
         """
+        source = set()
         if len(assets) < 2:
             raise ValueError(f"at least two assets are required, {len(assets)} were received")
         if len(assets) != len(price_path) + 1:
@@ -66,7 +69,8 @@ class MetaPrice:
                 cumulated_price /= price.value
             else:
                 cumulated_price *= price.value
-        return MetaPrice(cumulated_price, assets[0], assets[-1], price_path, source='price_path')
+            source.add(price.source)
+        return MetaPrice(cumulated_price, assets[0], assets[-1], price_path, source=source)
 
 
 @dataclass

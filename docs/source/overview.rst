@@ -25,12 +25,14 @@ This library only use public API endpoints, so there is no need to register to a
 Get a retriever
 ---------------
 
-To fetch some prices, you will need to use a retriever, there are several retrievers in this library
-but one is already instantiated for you:
+To fetch some prices, you will need to use a retriever, there are several kinds and instances of retrievers in this
+library so we made a default one for you:
 
 .. code:: python
 
-    from CryptoPrice import retriever
+    from CryptoPrice import get_default_retriever
+
+    retriever = get_default_retriever()
 
 You can also refer to the :doc:`retrievers` to learn how to instantiate your custom retriever.
 
@@ -43,7 +45,9 @@ Here are some examples, with the retriever instantiated in the library
 .. code-block:: python
 
     import datetime
-    from CryptoPrice import retriever
+    from CryptoPrice import get_default_retriever
+
+    retriever = get_default_retriever()
 
     asset = 'BTC'
     ref_asset = 'USDT'
@@ -63,7 +67,9 @@ than the one above as several API calls (or database requests) have to be made.
 .. code-block:: python
 
     import datetime
-    from CryptoPrice import retriever
+    from CryptoPrice import get_default_retriever
+
+    retriever = get_default_retriever()
 
     asset = 'LTC'
     ref_asset = 'XRP'
@@ -76,4 +82,4 @@ than the one above as several API calls (or database requests) have to be made.
 
 .. code-block:: bash
 
-    >>LTC = 420.80573 XRP, source: mean_meta
+    >>LTC = 420.80573 XRP, source: {'kucoin', 'binance'}
