@@ -1,4 +1,4 @@
-__version__ = "0.1.1dev"
+__version__ = "0.1.1"
 __author__ = "EtWnn"
 
 from CryptoPrice.retrievers.BinanceRetriever import BinanceRetriever
