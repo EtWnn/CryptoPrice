@@ -140,11 +140,23 @@ class DataBase:
         :return: None
         :rtype: None
         """
-        if isinstance(table, Table):
-            table = table.name
-        execution_order = f"DROP TABLE IF EXISTS {table}"
-        self.db_cursor.execute(execution_order)
-        self.db_conn.commit()
+        self.drop_tables([table])
+
+    def drop_tables(self, tables: List[Union[Table, str]]):
+        """
+        Delete a list of tables if they exist
+
+        :param tables: list of tables to delete
+        :type tables: List[Union[Table, str]]
+        :return: None
+        :rtype: None
+        """
+        for table in tables:
+            if isinstance(table, Table):
+                table = table.name
+            execution_order = f"DROP TABLE IF EXISTS {table}"
+            self.db_cursor.execute(execution_order)
+        self.commit()
 
     def drop_all_tables(self):
         """
@@ -153,14 +165,12 @@ class DataBase:
         :return: None
         :rtype: None
         """
-        tables_desc = self.get_all_tables()
-        for table_desc in tables_desc:
-            self.drop_table(table_desc[1])
-        self.commit()
+        tables = [t[1] for t in self.get_tables_descriptions()]
+        self.drop_tables(tables)
 
-    def get_all_tables(self) -> List[Tuple]:
+    def get_tables_descriptions(self) -> List[Tuple]:
         """
-        return all the tables existing in the database
+        return the descriptions of all the tables  existing in the database
 
         :return: tables descriptions
         :rtype: List[Tuple]
