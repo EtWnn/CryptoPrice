@@ -103,6 +103,9 @@ class MetaRetriever(AbstractRetriever):
         :return: Metaprice reflecting the value calculated through a trading path
         :rtype: Optional[MetaPrice]
         """
+        if asset == ref_asset:
+            yield MetaPrice(1, asset, ref_asset, [], source=set('',))
+            return
         if preferred_assets is None:
             preferred_assets = ['BTC', 'ETH']
 
