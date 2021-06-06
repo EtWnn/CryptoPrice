@@ -7,7 +7,7 @@ with open(os.path.join(this_directory, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 about = {}
-with open(os.path.join(this_directory, 'CryptoPrice/__init__.py'), encoding='utf-8') as f:
+with open(os.path.join(this_directory, 'CryptoPrice/__about__.py'), encoding='utf-8') as f:
     exec(f.read(), about)
 
 setup(
