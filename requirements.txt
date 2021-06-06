@@ -4,3 +4,4 @@ sphinx
 sphinx_rtd_theme
 python-binance
 kucoin-python
+git+https://github.com/teleprint-me/coinbasepro-python.git@2.1.28#egg=cbpro

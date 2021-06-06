@@ -25,7 +25,11 @@ setup(
     description='Library to retrieve price or candle history of crypto assets using multiple sources',
     long_description=long_description,
     long_description_content_type='text/x-rst',
-    install_requires=['requests', 'appdirs', 'python-binance', 'kucoin-python'],
+    install_requires=['requests',
+                      'appdirs',
+                      'python-binance',
+                      'kucoin-python',
+                      'cbpro@git+https://github.com/teleprint-me/coinbasepro-python.git@2.1.28'],
     keywords='eth bsc price ohlc candle history API Binance Kucoin',
     classifiers=[
         'Intended Audience :: Developers',
