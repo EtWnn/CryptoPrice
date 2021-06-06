@@ -67,10 +67,16 @@ class MetaRetriever(AbstractRetriever):
         :rtype: Optional[MetaPrice]
         """
         meta_prices = []
+        min_depth = max_depth + 1
         for meta_price in self.get_path_prices(asset, ref_asset, timestamp, preferred_assets,
-                                               max_depth, max_depth_range):
+                                               max_depth, -1):
             if meta_price is not None:
-                meta_prices.append(meta_price)
+                if min_depth > max_depth:
+                    min_depth = len(meta_price.prices)
+                if len(meta_price.prices) - min_depth > max_depth_range:
+                    break
+                else:
+                    meta_prices.append(meta_price)
         if len(meta_prices):
             return MetaPrice.mean_from_meta_price(meta_prices)
 
@@ -103,6 +109,9 @@ class MetaRetriever(AbstractRetriever):
         :return: Metaprice reflecting the value calculated through a trading path
         :rtype: Optional[MetaPrice]
         """
+        if asset == ref_asset:
+            yield MetaPrice(1, asset, ref_asset, [], source=set('',))
+            return
         if preferred_assets is None:
             preferred_assets = ['BTC', 'ETH']
 

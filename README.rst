@@ -1,5 +1,5 @@
 ===============================
-Welcome to CryptoPrice 0.1.1
+Welcome to CryptoPrice 0.1.2
 ===============================
 
 
@@ -26,6 +26,7 @@ amount of different tokens or to compare the price difference between exchanges.
 It currently includes:
     - Binance API
     - Kucoin API
+    - Coinbase API
     - Cross-API logic
 
 Quick Tour
@@ -71,7 +72,7 @@ A price retriever is already provided by the library, but feel free to check the
 
 You can also fetch a price even if the trading pair does not exist: The retriever (MetaRetriever) will find a path with
 several trading pairs to estimate the price between the asset and the ref asset. This method takes much more time
-than the one above as several API calls (or database requests) have to be made.
+than the one above as several API calls (or database requests) may be needed.
 
 .. code-block:: python
 
@@ -91,7 +92,7 @@ than the one above as several API calls (or database requests) have to be made.
 
 .. code-block:: bash
 
-    >>LTC = 420.80573 XRP, source: {'kucoin', 'binance'}
+    >>LTC = 420.76841 XRP, source: {'binance', 'kucoin', 'coinbase'}
 
 
 Donation

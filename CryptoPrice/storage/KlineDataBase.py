@@ -187,3 +187,14 @@ class KlineDataBase(DataBase):
         row = (timestamp, closest_timestamp, window)
         self.add_row(table, row, update_if_exists=True)
 
+    def drop_cache_tables(self):
+        """
+        Delete all the cache tables stored in the database
+
+        :return: None
+        :rtype: None
+        """
+        tables = [t[1] for t in self.get_tables_descriptions()]
+        tables = [table for table in tables if table.endswith('_cache')]
+        self.drop_tables(tables)
+
