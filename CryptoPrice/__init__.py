@@ -1,5 +1,4 @@
-__version__ = "0.1.2"
-__author__ = "EtWnn"
+from CryptoPrice.__about__ import *
 
 from CryptoPrice.retrievers.BinanceRetriever import BinanceRetriever
 from CryptoPrice.retrievers.KucoinRetriever import KucoinRetriever
