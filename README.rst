@@ -26,7 +26,6 @@ amount of different tokens or to compare the price difference between exchanges.
 It currently includes:
     - Binance API
     - Kucoin API
-    - Coinbase API
     - Cross-API logic
 
 Quick Tour
