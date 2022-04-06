@@ -1,5 +1,5 @@
 ===============================
-Welcome to CryptoPrice 0.1.3
+Welcome to CryptoPrice 0.2.0dev
 ===============================
 
 
@@ -37,10 +37,8 @@ Quick Tour
 
 .. code:: bash
 
-    pip install --no-deps python-CryptoPrice
     pip install python-CryptoPrice
 
-*Note*: `--no-deps` is needed as one of the dependencies is not hosted one PYPI, simply on git.
 
 You can also install the latest developments (not stable):
 
