@@ -8,10 +8,7 @@ Installation
 
 .. code:: bash
 
-    pip install --no-deps python-CryptoPrice
     pip install python-CryptoPrice
-
-*Note*: `--no-deps` is needed as one of the dependencies is not hosted one PYPI, simply on git.
 
 You can also install the latest developments (not stable):
 
@@ -29,7 +26,7 @@ Get a retriever
 ---------------
 
 To fetch some prices, you will need to use a retriever, there are several kinds and instances of retrievers in this
-library so we made a default one for you:
+library so a default one is ready for you:
 
 .. code:: python
 
