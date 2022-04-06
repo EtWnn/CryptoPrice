@@ -31,11 +31,6 @@ Implemented Retrievers
 
 Below are the retrievers implemented in this library.
 
-.. automodule:: CryptoPrice.retrievers.CoinbaseRetriever
-    :special-members: __init__
-    :members:
-    :undoc-members:
-
 .. automodule:: CryptoPrice.retrievers.BinanceRetriever
     :special-members: __init__
     :members:

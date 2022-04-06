@@ -94,7 +94,7 @@ than the one above as several API calls (or database requests) may be needed.
 
 .. code-block:: bash
 
-    >>LTC = 420.76841 XRP, source: {'binance', 'kucoin', 'coinbase'}
+    >>LTC = 420.76841 XRP, source: {'binance', 'kucoin'}
 
 
 Donation
