@@ -28,8 +28,7 @@ setup(
     install_requires=['requests',
                       'appdirs',
                       'python-binance',
-                      'kucoin-python',
-                      'cbpro@git+https://github.com/teleprint-me/coinbasepro-python.git@2.1.28'],
+                      'kucoin-python'],
     keywords='eth bsc price ohlc candle history API Binance Kucoin',
     classifiers=[
         'Intended Audience :: Developers',
