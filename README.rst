@@ -1,5 +1,5 @@
 ===============================
-Welcome to CryptoPrice 0.1.3
+Welcome to CryptoPrice 0.2.0dev
 ===============================
 
 
@@ -26,7 +26,6 @@ amount of different tokens or to compare the price difference between exchanges.
 It currently includes:
     - Binance API
     - Kucoin API
-    - Coinbase API
     - Cross-API logic
 
 Quick Tour
@@ -38,10 +37,8 @@ Quick Tour
 
 .. code:: bash
 
-    pip install --no-deps python-CryptoPrice
     pip install python-CryptoPrice
 
-*Note*: `--no-deps` is needed as one of the dependencies is not hosted one PYPI, simply on git.
 
 You can also install the latest developments (not stable):
 
@@ -95,7 +92,7 @@ than the one above as several API calls (or database requests) may be needed.
 
 .. code-block:: bash
 
-    >>LTC = 420.76841 XRP, source: {'binance', 'kucoin', 'coinbase'}
+    >>LTC = 420.76841 XRP, source: {'binance', 'kucoin'}
 
 
 Donation

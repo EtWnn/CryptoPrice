@@ -24,7 +24,7 @@ author = 'EtWnn'
 # The full version, including alpha/beta/rc tags
 this_directory = os.path.abspath(os.path.dirname(__file__))
 about = {}
-with open(os.path.join(this_directory, f'../../{project}/__init__.py'), encoding='utf-8') as f:
+with open(os.path.join(this_directory, f'../../{project}/__about__.py'), encoding='utf-8') as f:
     exec(f.read(), about)
 release = about['__version__']
 
